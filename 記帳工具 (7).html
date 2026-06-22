@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="我的記帳">
+<title>我的記帳</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f2f2f7;color:#1c1c1e;min-height:100vh;padding-bottom:40px}
+.app{max-width:430px;margin:0 auto}
+.top-bar{background:#fff;padding:12px 16px 0;border-bottom:0.5px solid rgba(0,0,0,0.12);position:sticky;top:0;z-index:100}
+.month-hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px}
+.mnav{display:flex;align-items:center;gap:12px}
+.mnav button{background:transparent;border:1px solid #c7c7cc;border-radius:8px;padding:5px 12px;font-size:16px;color:#3a3a3c;cursor:pointer;min-height:36px}
+.mlbl{font-size:16px;font-weight:600}
+.export-btn{font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid #c7c7cc;background:transparent;color:#636366;cursor:pointer}
+.tab-bar{display:flex;overflow-x:auto;scrollbar-width:none;padding-bottom:0}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:56px;padding:9px 4px;text-align:center;font-size:12px;border:none;background:transparent;color:#636366;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
+.tab.active{color:#007aff;border-bottom:2px solid #007aff;font-weight:500}
+.content{padding:16px}
+.page{display:none}.page.active{display:block}
+.sec-title{font-size:12px;font-weight:500;color:#8e8e93;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px;padding:0 4px}
+.card{background:#fff;border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 0.5px 0 rgba(0,0,0,0.1)}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid rgba(0,0,0,0.08)}
+.row:last-child{border-bottom:none}
+.rl{font-size:15px;color:#1c1c1e}
+.rs{font-size:12px;color:#8e8e93;margin-top:2px}
+.rr{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.amt{font-size:15px;font-weight:500}
+.amt-g{color:#34c759}.amt-e{color:#ff3b30}.amt-b{color:#007aff}
+.chk{width:28px;height:28px;border-radius:50%;border:1.5px solid #c7c7cc;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;flex-shrink:0}
+.chk.done{background:#34c759;border-color:#34c759;color:#fff}
+.edit-btn{background:transparent;border:none;cursor:pointer;color:#007aff;font-size:13px;padding:0 4px;flex-shrink:0}
+.del-btn{background:transparent;border:none;cursor:pointer;color:#c7c7cc;font-size:18px;padding:0 2px;line-height:1}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.sm{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 0.5px 0 rgba(0,0,0,0.1)}
+.sm-lbl{font-size:12px;color:#8e8e93;margin-bottom:4px}
+.sm-val{font-size:22px;font-weight:600}
+.form-section{background:#fff;border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 0.5px 0 rgba(0,0,0,0.1)}
+.form-row{display:flex;align-items:center;padding:0 16px;border-bottom:0.5px solid rgba(0,0,0,0.08);min-height:44px}
+.form-row:last-child{border-bottom:none}
+.form-row label{font-size:14px;color:#1c1c1e;min-width:72px;padding:12px 0}
+.form-row input,.form-row select{flex:1;border:none;background:transparent;font-size:14px;color:#1c1c1e;padding:12px 0 12px 8px;outline:none;font-family:inherit;text-align:right}
+.add-btn{width:100%;padding:14px;background:#007aff;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:16px;font-family:inherit}
+.save-btn{width:100%;padding:12px;background:#34c759;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:8px;font-family:inherit}
+.cancel-btn{width:100%;padding:12px;background:transparent;color:#636366;border:1px solid #c7c7cc;border-radius:12px;font-size:15px;cursor:pointer;margin-bottom:16px;font-family:inherit}
+.gap{height:20px}
+.empty-state{font-size:14px;color:#8e8e93;padding:20px;text-align:center}
+.cat-tag{font-size:11px;padding:2px 6px;border-radius:6px;font-weight:500}
+.pb{height:6px;background:#f2f2f7;border-radius:3px;overflow:hidden;margin:6px 0}
+.pf{height:100%;border-radius:3px;transition:width .4s}
+.src-tag{font-size:11px;padding:3px 8px;border-radius:6px}
+.ibdg{font-size:12px;padding:4px 10px;border-radius:8px;font-weight:500;cursor:pointer;user-select:none}
+.ibdg.ok{background:#f0fff4;color:#34c759}
+.ibdg.pend{background:#f2f2f7;color:#8e8e93}
+.drag-item{touch-action:pan-y}
+.drag-over{border-top:2px solid #007aff}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="top-bar">
+  <div class="month-hdr">
+    <div class="mnav">
+      <button onclick="chgM(-1)">&#8249;</button>
+      <span class="mlbl" id="mlbl"></span>
+      <button onclick="chgM(1)">&#8250;</button>
+    </div>
+    <button class="export-btn" onclick="exportData()">存檔 ↓</button>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="showP('ov',this)">總覽</button>
+    <button class="tab" onclick="showP('goals',this)">存款</button>
+    <button class="tab" onclick="showP('cards',this)">信用卡</button>
+    <button class="tab" onclick="showP('exp',this)">支出</button>
+    <button class="tab" onclick="showP('court',this)">紀錄台</button>
+  </div>
+</div>
+<div class="content">
+
+<div class="page active" id="page-ov">
+  <div class="sg">
+    <div class="sm"><div class="sm-lbl">薪水入帳</div><div class="sm-val amt-g" id="ov-sal"></div></div>
+    <div class="sm"><div class="sm-lbl">特殊收入</div><div class="sm-val amt-g" id="ov-bonus"></div></div>
+    <div class="sm"><div class="sm-lbl">紀錄台收入</div><div class="sm-val amt-g" id="ov-court"></div></div>
+    <div class="sm"><div class="sm-lbl">本月可存</div><div class="sm-val amt-b" id="ov-save"></div></div>
+  </div>
+  <div class="sg">
+    <div class="sm"><div class="sm-lbl">預計支出</div><div class="sm-val" style="color:#ff9500" id="ov-planned"></div></div>
+    <div class="sm"><div class="sm-lbl">實際支出</div><div class="sm-val amt-e" id="ov-actual"></div></div>
+  </div>
+  <div class="sec-title">特殊收入</div>
+  <div class="card" id="bonus-list"></div>
+  <div class="form-section">
+    <div class="form-row"><label>名稱</label><input type="text" id="bon-name" placeholder="年終、退稅…"></div>
+    <div class="form-row"><label>金額</label><input type="number" id="bon-amt" inputmode="numeric"></div>
+  </div>
+  <button class="add-btn" onclick="addBonus()">新增特殊收入</button>
+  <div class="gap"></div>
+  <div class="sec-title">本月支出明細</div>
+  <div class="card" id="ov-exp-detail"></div>
+</div>
+
+<div class="page" id="page-goals">
+  <div class="sec-title">存款目標</div>
+  <div id="goals-list"></div>
+  <div class="gap"></div>
+  <div class="sec-title">存入款項</div>
+  <div class="form-section">
+    <div class="form-row"><label>目標</label><select id="dep-goal"></select></div>
+    <div class="form-row"><label>金額</label><input type="number" id="dep-amt" inputmode="numeric"></div>
+    <div class="form-row"><label>來源</label>
+      <select id="dep-src">
+        <option value="薪水">薪水</option>
+        <option value="紀錄台">紀錄台</option>
+        <option value="特殊收入">特殊收入</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+  </div>
+  <button class="add-btn" onclick="addDeposit()">存入</button>
+  <div class="gap"></div>
+  <div class="sec-title">新增目標</div>
+  <div class="form-section">
+    <div class="form-row"><label>目標名稱</label><input type="text" id="gl-name"></div>
+    <div class="form-row"><label>種類</label><input type="text" id="gl-type"></div>
+    <div class="form-row"><label>出發月份</label><input type="month" id="gl-month"></div>
+    <div class="form-row"><label>目標金額</label><input type="number" id="gl-target" inputmode="numeric"></div>
+    <div class="form-row"><label>來源備註</label><input type="text" id="gl-notes"></div>
+    <div class="form-row"><label>顏色</label>
+      <select id="gl-color">
+        <option value="teal">綠</option>
+        <option value="blue">藍</option>
+        <option value="purple">紫</option>
+        <option value="coral">橘</option>
+        <option value="amber">黃</option>
+        <option value="pink">粉</option>
+      </select>
+    </div>
+  </div>
+  <button class="add-btn" onclick="addGoal()">新增目標</button>
+</div>
+
+<div class="page" id="page-cards">
+  <div id="cc-cards-list"></div>
+</div>
+
+<div class="page" id="page-exp">
+  <div class="sec-title">支出記錄</div>
+  <div class="card" id="exp-list"></div>
+  <div class="gap"></div>
+  <div class="sec-title">新增支出</div>
+  <div class="form-section">
+    <div class="form-row"><label>類別</label>
+      <select id="exp-cat">
+        <option value="固定支出">固定支出</option>
+        <option value="個人花費">個人花費</option>
+        <option value="聚餐">聚餐</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div class="form-row"><label>項目</label><input type="text" id="exp-name"></div>
+    <div class="form-row"><label>金額</label><input type="number" id="exp-amt" inputmode="numeric"></div>
+    <div class="form-row"><label>日期</label><input type="date" id="exp-date"></div>
+  </div>
+  <button class="add-btn" onclick="addExp()">新增支出</button>
+</div>
+
+<div class="page" id="page-court">
+  <div class="sg">
+    <div class="sm"><div class="sm-lbl">已入帳</div><div class="sm-val amt-g" id="ct-confirmed"></div></div>
+    <div class="sm"><div class="sm-lbl">待確認</div><div class="sm-val" style="color:#8e8e93" id="ct-pending"></div></div>
+  </div>
+  <div class="sec-title">場次紀錄</div>
+  <div class="card" id="court-entries"></div>
+  <div class="gap"></div>
+  <div class="sec-title">新增場次</div>
+  <div class="form-section">
+    <div class="form-row"><label>日期</label><input type="date" id="ct-date"></div>
+    <div class="form-row"><label>場地</label>
+      <select id="ct-venue"><option>北投</option><option>大同</option><option>士林</option><option>特殊盃賽</option></select>
+    </div>
+    <div class="form-row"><label>星期</label>
+      <select id="ct-day"><option value="sat">週六($250/場)</option><option value="sun">週日($270/場)</option></select>
+    </div>
+    <div class="form-row"><label>場數</label><input type="number" id="ct-sessions" inputmode="numeric"></div>
+    <div class="form-row"><label>自訂金額</label><input type="number" id="ct-amt-override" inputmode="numeric"></div>
+  </div>
+  <button class="add-btn" onclick="addCourtEntry()">新增場次</button>
+</div>
+
+</div>
+</div>
+
+<div id="edit-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:200;overflow-y:auto">
+  <div style="max-width:430px;margin:60px auto 20px;padding:0 16px">
+    <div style="background:#fff;border-radius:16px;overflow:hidden">
+      <div style="padding:16px;border-bottom:0.5px solid rgba(0,0,0,0.08);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:16px;font-weight:600" id="edit-title">編輯</span>
+        <button onclick="closeEdit()" style="background:transparent;border:none;font-size:22px;color:#8e8e93;cursor:pointer">&#215;</button>
+      </div>
+      <div id="edit-body"></div>
+      <div style="padding:16px">
+        <button class="save-btn" onclick="saveEdit()">儲存</button>
+        <button class="cancel-btn" onclick="closeEdit()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+var GOAL_COLORS = {teal:'#34c759',blue:'#007aff',purple:'#7c3aed',coral:'#ff6b35',amber:'#ff9500',pink:'#ff2d55'};
+var CAT_BG = {'固定支出':'#f2f2f7','個人花費':'#f0f4ff','聚餐':'#f0fff4','其他':'#fff8ed'};
+var CAT_TC = {'固定支出':'#636366','個人花費':'#007aff','聚餐':'#34c759','其他':'#ff9500'};
+var now = new Date();
+var CY = now.getFullYear();
+var CM = now.getMonth();
+var GOALS = [];
+var DEPOSITS = [];
+var EDIT_CTX = {};
+
+function mkey(k) { return 'bgt_' + CY + '_' + CM + '_' + k; }
+function gkey(k) { return 'bgt_g_' + k; }
+function lsGet(k, def) { try { var v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : def; } catch(e) { return def; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+function getMD(k, def) { return lsGet(mkey(k), def); }
+function setMD(k, v) { lsSet(mkey(k), v); }
+
+function fmt(n) { return '$' + (Math.round(n) || 0).toLocaleString(); }
+function fmtDate(d) { if (!d) return ''; var p = d.split('-'); return p.length === 3 ? p[1] + '/' + p[2] : d; }
+
+function sortByDate(arr) {
+  return arr.slice().sort(function(a, b) {
+    var da = a.date || '', db = b.date || '';
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+}
+
+function initDrag(containerId, dataArr, onSave) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var items = el.querySelectorAll('.drag-item');
+  var dragSrc = null;
+  items.forEach(function(item) {
+    item.setAttribute('draggable', 'true');
+    item.addEventListener('dragstart', function(ev) {
+      dragSrc = item;
+      item.style.opacity = '0.5';
+      ev.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', function() {
+      item.style.opacity = '';
+      el.querySelectorAll('.drag-item').forEach(function(it) { it.classList.remove('drag-over'); });
+    });
+    item.addEventListener('dragover', function(ev) {
+      ev.preventDefault();
+      el.querySelectorAll('.drag-item').forEach(function(it) { it.classList.remove('drag-over'); });
+      if (item !== dragSrc) item.classList.add('drag-over');
+    });
+    item.addEventListener('drop', function(ev) {
+      ev.preventDefault();
+      if (dragSrc && dragSrc !== item) {
+        var kids = Array.from(el.querySelectorAll('.drag-item'));
+        var fi = kids.indexOf(dragSrc);
+        var ti = kids.indexOf(item);
+        var na = dataArr.slice();
+        var moved = na.splice(fi, 1)[0];
+        na.splice(ti, 0, moved);
+        onSave(na);
+      }
+    });
+  });
+  var touchSrc = null, touchSrcIdx = null;
+  items.forEach(function(item, idx) {
+    item.addEventListener('touchstart', function(ev) { touchSrc = item; touchSrcIdx = idx; }, {passive:true});
+    item.addEventListener('touchend', function(ev) {
+      var t = ev.changedTouches[0];
+      var target = document.elementFromPoint(t.clientX, t.clientY);
+      if (target) {
+        var tc = target.closest ? target.closest('.drag-item') : null;
+        if (tc && tc !== touchSrc) {
+          var kids = Array.from(el.querySelectorAll('.drag-item'));
+          var fi = kids.indexOf(touchSrc);
+          var ti = kids.indexOf(tc);
+          var na = dataArr.slice();
+          var moved = na.splice(fi, 1)[0];
+          na.splice(ti, 0, moved);
+          onSave(na);
+        }
+      }
+      el.querySelectorAll('.drag-item').forEach(function(it) { it.classList.remove('drag-over'); });
+    }, {passive:true});
+  });
+}
+
+function countdownLabel(tm) {
+  if (!tm) return '';
+  var p = tm.split('-');
+  var ty = parseInt(p[0]), tmo = parseInt(p[1]) - 1;
+  var diff = (ty - now.getFullYear()) * 12 + (tmo - now.getMonth());
+  if (diff < 0) return '已過期';
+  if (diff === 0) return '本月';
+  return '還有' + diff + '個月';
+}
+
+function loadData() {
+  GOALS = lsGet(gkey('goals'), [
+    {id:'g1',name:'濟州島',type:'旅遊',targetMonth:'2025-08',notes:'',target:40000,color:'teal'},
+    {id:'g2',name:'澎湖/新疆',type:'旅遊',targetMonth:'2025-09',notes:'',target:30000,color:'blue'},
+    {id:'g3',name:'股票基金',type:'投資',targetMonth:'',notes:'',target:100000,color:'purple'}
+  ]);
+  DEPOSITS = lsGet(gkey('deposits'), []);
+}
+
+function goalSaved(id) {
+  return DEPOSITS.filter(function(d) { return d.goalId === id; }).reduce(function(s, d) { return s + d.amt; }, 0);
+}
+function goalSavedBySrc(id, src) {
+  return DEPOSITS.filter(function(d) { return d.goalId === id && d.src === src; }).reduce(function(s, d) { return s + d.amt; }, 0);
+}
+
+function chgM(d) {
+  CM += d;
+  if (CM > 11) { CM = 0; CY++; }
+  if (CM < 0) { CM = 11; CY--; }
+  renderAll();
+}
+
+function showP(id, btn) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function calcTotals() {
+  var salary = getMD('salary', 48500);
+  var bonuses = getMD('bonuses', []);
+  var bonusTotal = bonuses.reduce(function(s, b) { return s + b.amt; }, 0);
+  var courtList = getMD('courtEntries', []);
+  var courtIncome = courtList.filter(function(e) { return e.paid; }).reduce(function(s, e) { return s + e.amt; }, 0);
+  var expList = getMD('expenses', []);
+  var ccList = getMD('ccCards', defaultCC());
+  var ccTotal = ccList.reduce(function(s, cc) { return s + cc.amt; }, 0);
+  var planned = expList.filter(function(e) { return !e.paid; }).reduce(function(s, e) { return s + (e.amt || 0); }, 0);
+  var actual = expList.filter(function(e) { return e.paid; }).reduce(function(s, e) { return s + (e.amt || 0); }, 0) + ccTotal;
+  var canSave = salary + bonusTotal + courtIncome - actual - planned;
+  return {salary:salary, bonusTotal:bonusTotal, courtIncome:courtIncome, planned:planned, actual:actual, canSave:canSave};
+}
+
+function renderAll() {
+  document.getElementById('mlbl').textContent = CY + '年 ' + MONTHS[CM];
+  renderOverview();
+  renderGoals();
+  renderCards();
+  renderExpenses();
+  renderCourt();
+  renderGoalSelect();
+}
+
+function renderOverview() {
+  var t = calcTotals();
+  document.getElementById('ov-sal').textContent = fmt(t.salary);
+  document.getElementById('ov-bonus').textContent = fmt(t.bonusTotal);
+  document.getElementById('ov-court').textContent = fmt(t.courtIncome);
+  document.getElementById('ov-save').textContent = fmt(t.canSave);
+  document.getElementById('ov-planned').textContent = fmt(t.planned);
+  document.getElementById('ov-actual').textContent = fmt(t.actual);
+
+  var bonuses = getMD('bonuses', []);
+  var bh = bonuses.length ? '' : '<div class="empty-state">本月尚無特殊收入</div>';
+  bonuses.forEach(function(b, i) {
+    bh += '<div class="row"><div class="rl">' + b.name + '</div><div class="rr"><span class="amt amt-g">' + fmt(b.amt) + '</span><button class="edit-btn" onclick="editBonus(' + i + ')">編輯</button><button class="del-btn" onclick="delBonus(' + i + ')">&#215;</button></div></div>';
+  });
+  document.getElementById('bonus-list').innerHTML = bh;
+
+  var expList = getMD('expenses', []);
+  var ccList = getMD('ccCards', defaultCC());
+  var dh = '';
+  expList.forEach(function(exp) {
+    var bg = CAT_BG[exp.cat] || '#f2f2f7';
+    var tc = CAT_TC[exp.cat] || '#636366';
+    var sc = exp.paid ? '#34c759' : '#ff9500';
+    var st = exp.paid ? '已付' : '預計';
+    dh += '<div class="row"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="cat-tag" style="background:' + bg + ';color:' + tc + '">' + exp.cat + '</span><span class="rl">' + exp.name + '</span></div>' + (exp.date ? '<div class="rs">' + fmtDate(exp.date) + '</div>' : '') + '</div><div class="rr"><span style="font-size:11px;color:' + sc + '">' + st + '</span><span class="amt">' + (exp.amt ? fmt(exp.amt) : '—') + '</span></div></div>';
+  });
+  ccList.forEach(function(cc) {
+    if (cc.amt > 0) {
+      var sc = cc.paid ? '#34c759' : '#ff9500';
+      var st = cc.paid ? '已付' : '預計';
+      dh += '<div class="row"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span class="cat-tag" style="background:#f2f2f7;color:#636366">信用卡</span><span class="rl">' + cc.name + '</span></div></div><div class="rr"><span style="font-size:11px;color:' + sc + '">' + st + '</span><span class="amt">' + fmt(cc.amt) + '</span></div></div>';
+    }
+  });
+  document.getElementById('ov-exp-detail').innerHTML = dh || '<div class="empty-state">本月尚無支出記錄</div>';
+}
+
+function addBonus() {
+  var name = document.getElementById('bon-name').value.trim();
+  var amt = parseInt(document.getElementById('bon-amt').value) || 0;
+  if (!name && !amt) return;
+  var list = getMD('bonuses', []);
+  list.push({name: name || '收入', amt: amt});
+  setMD('bonuses', list);
+  document.getElementById('bon-name').value = '';
+  document.getElementById('bon-amt').value = '';
+  renderAll();
+}
+function delBonus(i) { var list = getMD('bonuses', []); list.splice(i, 1); setMD('bonuses', list); renderAll(); }
+function editBonus(i) {
+  var list = getMD('bonuses', []);
+  var b = list[i];
+  EDIT_CTX = {type:'bonus', idx:i};
+  document.getElementById('edit-title').textContent = '編輯特殊收入';
+  document.getElementById('edit-body').innerHTML = '<div class="form-section" style="margin:0;border-radius:0;box-shadow:none"><div class="form-row"><label>名稱</label><input type="text" id="eb-name" value="' + (b.name||'') + '"></div><div class="form-row"><label>金額</label><input type="number" id="eb-amt" value="' + (b.amt||'') + '" inputmode="numeric"></div></div>';
+  document.getElementById('edit-overlay').style.display = 'block';
+}
+
+function renderGoals() {
+  var html = '';
+  GOALS.forEach(function(g) {
+    var saved = goalSaved(g.id);
+    var pct = g.target > 0 ? Math.min(100, Math.round(saved / g.target * 100)) : 0;
+    var clr = GOAL_COLORS[g.color] || GOAL_COLORS.teal;
+    var cdl = countdownLabel(g.targetMonth);
+    var cdBg = cdl === '已過期' ? '#fff0f0' : cdl === '本月' ? '#fff8ed' : '#f0fff4';
+    var cdTc = cdl === '已過期' ? '#ff3b30' : cdl === '本月' ? '#ff9500' : '#34c759';
+    var salS = goalSavedBySrc(g.id, '薪水');
+    var ctS = goalSavedBySrc(g.id, '紀錄台');
+    var spS = goalSavedBySrc(g.id, '特殊收入');
+    var otS = goalSavedBySrc(g.id, '其他');
+    html += '<div class="card drag-item" style="padding:0"><div style="padding:14px 16px 0">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">';
+    html += '<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+    html += '<span style="font-size:15px;font-weight:600">' + g.name + '</span>';
+    if (g.type) html += '<span style="font-size:11px;background:#f2f2f7;color:#636366;padding:2px 6px;border-radius:6px">' + g.type + '</span>';
+    if (cdl) html += '<span style="font-size:11px;background:' + cdBg + ';color:' + cdTc + ';padding:2px 6px;border-radius:6px">' + cdl + '</span>';
+    html += '</div>';
+    if (g.targetMonth) html += '<div style="font-size:12px;color:#8e8e93;margin-top:2px">' + g.targetMonth.replace('-', '年') + '月</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center"><span style="color:#c7c7cc;font-size:20px;cursor:grab;padding:0 6px">&#8942;</span><button class="edit-btn" onclick="editGoal(\'' + g.id + '\')">編輯</button><button class="del-btn" onclick="delGoal(\'' + g.id + '\')">&#215;</button></div>';
+    html += '</div>';
+    if (g.notes) html += '<div style="font-size:12px;color:#8e8e93;background:#f9f9f9;padding:4px 10px;border-radius:6px;margin:4px 0 6px">' + g.notes + '</div>';
+    html += '<div style="padding-bottom:14px">';
+    html += '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:#8e8e93">' + fmt(saved) + ' / ' + fmt(g.target || 0) + '</span><span style="font-weight:600;color:' + clr + '">' + pct + '%</span></div>';
+    html += '<div class="pb"><div class="pf" style="width:' + pct + '%;background:' + clr + '"></div></div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
+    if (salS) html += '<span class="src-tag" style="background:#f0f4ff;color:#007aff">薪水 ' + fmt(salS) + '</span>';
+    if (ctS) html += '<span class="src-tag" style="background:#f0fff4;color:#34c759">紀錄台 ' + fmt(ctS) + '</span>';
+    if (spS) html += '<span class="src-tag" style="background:#fff8ed;color:#ff9500">特殊 ' + fmt(spS) + '</span>';
+    if (otS) html += '<span class="src-tag" style="background:#f2f2f7;color:#636366">其他 ' + fmt(otS) + '</span>';
+    html += '</div></div></div></div>';
+  });
+  document.getElementById('goals-list').innerHTML = html || '<div class="empty-state" style="background:#fff;border-radius:12px;padding:20px">尚未設定目標</div>';
+  initDrag('goals-list', GOALS, function(arr) { GOALS = arr; lsSet(gkey('goals'), GOALS); renderGoals(); });
+}
+
+function renderGoalSelect() {
+  var sel = document.getElementById('dep-goal');
+  sel.innerHTML = '';
+  GOALS.forEach(function(g) {
+    var o = document.createElement('option');
+    o.value = g.id; o.textContent = g.name;
+    sel.appendChild(o);
+  });
+}
+
+function addGoal() {
+  var name = document.getElementById('gl-name').value.trim();
+  if (!name) return;
+  GOALS.push({
+    id: 'g' + Date.now(),
+    name: name,
+    type: document.getElementById('gl-type').value.trim(),
+    targetMonth: document.getElementById('gl-month').value,
+    target: parseInt(document.getElementById('gl-target').value) || 0,
+    notes: document.getElementById('gl-notes').value.trim(),
+    color: document.getElementById('gl-color').value
+  });
+  lsSet(gkey('goals'), GOALS);
+  document.getElementById('gl-name').value = '';
+  document.getElementById('gl-type').value = '';
+  document.getElementById('gl-month').value = '';
+  document.getElementById('gl-target').value = '';
+  document.getElementById('gl-notes').value = '';
+  renderAll();
+}
+function delGoal(id) { GOALS = GOALS.filter(function(g) { return g.id !== id; }); lsSet(gkey('goals'), GOALS); renderAll(); }
+function editGoal(id) {
+  var g = null;
+  GOALS.forEach(function(x) { if (x.id === id) g = x; });
+  if (!g) return;
+  EDIT_CTX = {type:'goal', id:id};
+  document.getElementById('edit-title').textContent = '編輯目標';
+  document.getElementById('edit-body').innerHTML = '<div class="form-section" style="margin:0;border-radius:0;box-shadow:none"><div class="form-row"><label>名稱</label><input type="text" id="eg-name" value="' + (g.name||'') + '"></div><div class="form-row"><label>種類</label><input type="text" id="eg-type" value="' + (g.type||'') + '"></div><div class="form-row"><label>出發月份</label><input type="month" id="eg-month" value="' + (g.targetMonth||'') + '"></div><div class="form-row"><label>目標金額</label><input type="number" id="eg-target" value="' + (g.target||'') + '" inputmode="numeric"></div><div class="form-row"><label>來源備註</label><input type="text" id="eg-notes" value="' + (g.notes||'') + '"></div><div class="form-row"><label>顏色</label><select id="eg-color"><option value="teal"' + (g.color==='teal'?' selected':'') + '>綠</option><option value="blue"' + (g.color==='blue'?' selected':'') + '>藍</option><option value="purple"' + (g.color==='purple'?' selected':'') + '>紫</option><option value="coral"' + (g.color==='coral'?' selected':'') + '>橘</option><option value="amber"' + (g.color==='amber'?' selected':'') + '>黃</option><option value="pink"' + (g.color==='pink'?' selected':'') + '>粉</option></select></div></div>';
+  document.getElementById('edit-overlay').style.display = 'block';
+}
+
+function addDeposit() {
+  var gid = document.getElementById('dep-goal').value;
+  var amt = parseInt(document.getElementById('dep-amt').value) || 0;
+  var src = document.getElementById('dep-src').value;
+  if (!gid || !amt) return;
+  DEPOSITS.push({goalId:gid, amt:amt, src:src, ym:CY+'_'+CM, date:new Date().toLocaleDateString('zh-TW')});
+  lsSet(gkey('deposits'), DEPOSITS);
+  document.getElementById('dep-amt').value = '';
+  renderAll();
+}
+
+function defaultCC() {
+  return [
+    {id:'cc1',name:'中信',cutoff:'每月5日',pay:'23–25日',note:'含保費+捐款',amt:0,paid:false},
+    {id:'cc2',name:'花旗',cutoff:'每月20日',pay:'下月5–9日',note:'Netflix+Apple',amt:0,paid:false},
+    {id:'cc3',name:'台新',cutoff:'每月6日',pay:'22日',note:'主力卡',amt:0,paid:false},
+    {id:'cc4',name:'聯邦',cutoff:'每月12日',pay:'25–27日',note:'備用/出國',amt:0,paid:false}
+  ];
+}
+
+function renderCards() {
+  var list = getMD('ccCards', defaultCC());
+  var html = '';
+  list.forEach(function(cc, i) {
+    html += '<div class="card"><div style="padding:14px 16px 8px"><div style="display:flex;justify-content:space-between"><span style="font-size:15px;font-weight:600">' + cc.name + '</span><span style="font-size:12px;color:#8e8e93">截止 ' + cc.cutoff + ' · 繳費 ' + cc.pay + '</span></div>';
+    if (cc.note) html += '<div style="font-size:12px;color:#007aff;background:#f0f4ff;padding:3px 8px;border-radius:6px;margin-top:6px;display:inline-block">' + cc.note + '</div>';
+    html += '</div><div class="row"><div class="rl">本月帳單</div><div class="rr"><input type="number" value="' + cc.amt + '" inputmode="numeric" style="width:100px;font-size:15px;text-align:right;border:none;background:transparent;color:#1c1c1e;font-family:inherit;padding:0" onchange="updateCC(' + i + ',this.value)"><span style="font-size:13px;color:#8e8e93;margin-left:2px">元</span></div></div>';
+    html += '<div class="row"><div class="rl">已繳款</div><div class="rr"><button class="chk' + (cc.paid ? ' done' : '') + '" onclick="toggleCC(' + i + ',this)">&#10003;</button></div></div></div>';
+  });
+  document.getElementById('cc-cards-list').innerHTML = html;
+}
+function updateCC(i, val) {
+  var list = getMD('ccCards', defaultCC());
+  list[i].amt = parseInt(val) || 0;
+  setMD('ccCards', list);
+  renderOverview();
+}
+function toggleCC(i, btn) {
+  var list = getMD('ccCards', defaultCC());
+  list[i].paid = !list[i].paid;
+  setMD('ccCards', list);
+  btn.classList.toggle('done');
+  renderOverview();
+}
+
+function renderExpenses() {
+  var list = getMD('expenses', []);
+  var sorted = sortByDate(list);
+  var html = '';
+  sorted.forEach(function(exp) {
+    var origIdx = list.indexOf(exp);
+    var bg = CAT_BG[exp.cat] || '#f2f2f7';
+    var tc = CAT_TC[exp.cat] || '#636366';
+    html += '<div class="row drag-item"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="cat-tag" style="background:' + bg + ';color:' + tc + '">' + exp.cat + '</span><span class="rl">' + exp.name + '</span></div>' + (exp.date ? '<div class="rs">' + fmtDate(exp.date) + '</div>' : '') + '</div><div class="rr"><span class="amt">' + (exp.amt ? fmt(exp.amt) : '—') + '</span><button class="chk' + (exp.paid ? ' done' : '') + '" onclick="toggleExp(' + origIdx + ',this)">&#10003;</button><button class="edit-btn" onclick="editExp(' + origIdx + ')">編輯</button><button class="del-btn" onclick="delExp(' + origIdx + ')">&#215;</button></div></div>';
+  });
+  document.getElementById('exp-list').innerHTML = html || '<div class="empty-state">尚無支出記錄</div>';
+  initDrag('exp-list', list, function(arr) { setMD('expenses', arr); renderExpenses(); renderOverview(); });
+}
+
+function addExp() {
+  var cat = document.getElementById('exp-cat').value;
+  var name = document.getElementById('exp-name').value.trim();
+  var amt = parseInt(document.getElementById('exp-amt').value) || 0;
+  var date = document.getElementById('exp-date').value;
+  if (!name && !amt) return;
+  var list = getMD('expenses', []);
+  list.push({cat:cat, name:name || cat, amt:amt, date:date, paid:false});
+  setMD('expenses', list);
+  document.getElementById('exp-name').value = '';
+  document.getElementById('exp-amt').value = '';
+  document.getElementById('exp-date').value = '';
+  renderExpenses(); renderOverview();
+}
+function toggleExp(i, btn) {
+  var list = getMD('expenses', []);
+  list[i].paid = !list[i].paid;
+  setMD('expenses', list);
+  btn.classList.toggle('done');
+  renderOverview();
+}
+function delExp(i) { var list = getMD('expenses', []); list.splice(i, 1); setMD('expenses', list); renderExpenses(); renderOverview(); }
+function editExp(i) {
+  var list = getMD('expenses', []);
+  var exp = list[i];
+  EDIT_CTX = {type:'exp', idx:i};
+  document.getElementById('edit-title').textContent = '編輯支出';
+  document.getElementById('edit-body').innerHTML = '<div class="form-section" style="margin:0;border-radius:0;box-shadow:none"><div class="form-row"><label>類別</label><select id="ee-cat"><option value="固定支出"' + (exp.cat==='固定支出'?' selected':'') + '>固定支出</option><option value="個人花費"' + (exp.cat==='個人花費'?' selected':'') + '>個人花費</option><option value="聚餐"' + (exp.cat==='聚餐'?' selected':'') + '>聚餐</option><option value="其他"' + (exp.cat==='其他'?' selected':'') + '>其他</option></select></div><div class="form-row"><label>項目</label><input type="text" id="ee-name" value="' + (exp.name||'') + '"></div><div class="form-row"><label>金額</label><input type="number" id="ee-amt" value="' + (exp.amt||'') + '" inputmode="numeric"></div><div class="form-row"><label>日期</label><input type="date" id="ee-date" value="' + (exp.date||'') + '"></div></div>';
+  document.getElementById('edit-overlay').style.display = 'block';
+}
+
+function renderCourt() {
+  var list = getMD('courtEntries', []);
+  var confirmed = 0, pending = 0;
+  list.forEach(function(e) { if (e.paid) confirmed += e.amt; else pending += e.amt; });
+  document.getElementById('ct-confirmed').textContent = fmt(confirmed);
+  document.getElementById('ct-pending').textContent = fmt(pending);
+  var sorted = sortByDate(list);
+  var html = '';
+  sorted.forEach(function(e) {
+    var origIdx = list.indexOf(e);
+    html += '<div class="row drag-item"><div><div class="rl">' + e.venue + '</div><div class="rs">' + (e.date ? fmtDate(e.date) : '') + '</div></div><div class="rr"><span class="ibdg ' + (e.paid ? 'ok' : 'pend') + '" onclick="toggleCourt(' + origIdx + ',this)">' + (e.paid ? '已入帳' : '待確認') + ' ' + fmt(e.amt) + '</span><button class="edit-btn" onclick="editCourt(' + origIdx + ')">編輯</button><button class="del-btn" onclick="delCourt(' + origIdx + ')">&#215;</button></div></div>';
+  });
+  document.getElementById('court-entries').innerHTML = html || '<div class="empty-state">尚無場次紀錄</div>';
+  initDrag('court-entries', list, function(arr) { setMD('courtEntries', arr); renderCourt(); renderOverview(); });
+}
+function toggleCourt(i, badge) {
+  var list = getMD('courtEntries', []);
+  list[i].paid = !list[i].paid;
+  setMD('courtEntries', list);
+  badge.className = 'ibdg ' + (list[i].paid ? 'ok' : 'pend');
+  badge.textContent = (list[i].paid ? '已入帳' : '待確認') + ' ' + fmt(list[i].amt);
+  renderCourt(); renderOverview();
+}
+function delCourt(i) { var list = getMD('courtEntries', []); list.splice(i, 1); setMD('courtEntries', list); renderCourt(); renderOverview(); }
+function editCourt(i) {
+  var list = getMD('courtEntries', []);
+  var e = list[i];
+  EDIT_CTX = {type:'court', idx:i};
+  document.getElementById('edit-title').textContent = '編輯場次';
+  document.getElementById('edit-body').innerHTML = '<div class="form-section" style="margin:0;border-radius:0;box-shadow:none"><div class="form-row"><label>日期</label><input type="date" id="ec-date" value="' + (e.date||'') + '"></div><div class="form-row"><label>場地</label><select id="ec-venue"><option' + (e.venue==='北投'?' selected':'') + '>北投</option><option' + (e.venue==='大同'?' selected':'') + '>大同</option><option' + (e.venue==='士林'?' selected':'') + '>士林</option><option' + (e.venue==='特殊盃賽'?' selected':'') + '>特殊盃賽</option></select></div><div class="form-row"><label>金額</label><input type="number" id="ec-amt" value="' + e.amt + '" inputmode="numeric"></div></div>';
+  document.getElementById('edit-overlay').style.display = 'block';
+}
+function addCourtEntry() {
+  var date = document.getElementById('ct-date').value;
+  var venue = document.getElementById('ct-venue').value;
+  var day = document.getElementById('ct-day').value;
+  var sessions = parseInt(document.getElementById('ct-sessions').value) || 0;
+  var override = parseInt(document.getElementById('ct-amt-override').value) || 0;
+  var amt = override || sessions * (day === 'sat' ? 250 : 270);
+  if (!amt) return;
+  var list = getMD('courtEntries', []);
+  list.push({date:date, venue:venue, day:day, amt:amt, paid:false});
+  setMD('courtEntries', list);
+  document.getElementById('ct-date').value = '';
+  document.getElementById('ct-sessions').value = '';
+  document.getElementById('ct-amt-override').value = '';
+  renderCourt(); renderOverview();
+}
+
+function closeEdit() { document.getElementById('edit-overlay').style.display = 'none'; EDIT_CTX = {}; }
+function saveEdit() {
+  if (EDIT_CTX.type === 'exp') {
+    var list = getMD('expenses', []);
+    var i = EDIT_CTX.idx;
+    list[i].cat = document.getElementById('ee-cat').value;
+    list[i].name = document.getElementById('ee-name').value.trim() || list[i].cat;
+    list[i].amt = parseInt(document.getElementById('ee-amt').value) || 0;
+    list[i].date = document.getElementById('ee-date').value;
+    setMD('expenses', list); renderExpenses(); renderOverview();
+  } else if (EDIT_CTX.type === 'goal') {
+    var gi = -1;
+    GOALS.forEach(function(g, idx) { if (g.id === EDIT_CTX.id) gi = idx; });
+    if (gi > -1) {
+      GOALS[gi].name = document.getElementById('eg-name').value.trim() || GOALS[gi].name;
+      GOALS[gi].type = document.getElementById('eg-type').value.trim();
+      GOALS[gi].targetMonth = document.getElementById('eg-month').value;
+      GOALS[gi].target = parseInt(document.getElementById('eg-target').value) || 0;
+      GOALS[gi].notes = document.getElementById('eg-notes').value.trim();
+      GOALS[gi].color = document.getElementById('eg-color').value;
+      lsSet(gkey('goals'), GOALS); renderGoals();
+    }
+  } else if (EDIT_CTX.type === 'bonus') {
+    var blist = getMD('bonuses', []);
+    var bi = EDIT_CTX.idx;
+    blist[bi].name = document.getElementById('eb-name').value.trim() || blist[bi].name;
+    blist[bi].amt = parseInt(document.getElementById('eb-amt').value) || 0;
+    setMD('bonuses', blist); renderOverview();
+  } else if (EDIT_CTX.type === 'court') {
+    var clist = getMD('courtEntries', []);
+    var ci = EDIT_CTX.idx;
+    clist[ci].date = document.getElementById('ec-date').value;
+    clist[ci].venue = document.getElementById('ec-venue').value;
+    clist[ci].amt = parseInt(document.getElementById('ec-amt').value) || 0;
+    setMD('courtEntries', clist); renderCourt(); renderOverview();
+  }
+  closeEdit();
+}
+
+function exportData() {
+  var data = {goals:GOALS, deposits:DEPOSITS, exportedAt:new Date().toLocaleString('zh-TW'), months:{}};
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('bgt_') === 0) { try { data.months[k] = JSON.parse(localStorage.getItem(k)); } catch(e) {} }
+    }
+  } catch(e) {}
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = '記帳存檔_' + CY + '年' + (CM + 1) + '月.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+}
+
+loadData();
+renderAll();
+</script>
+</body>
+</html>
